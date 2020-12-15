@@ -1,0 +1,6 @@
+(define (appendo x y xy)
+  (fresh (e xs xys)
+      `(|| ((== ,x ()) (== ,y ,xy))
+             ((== ,x  (cons ,e ,xs))
+              (== ,xy (cons ,e ,xys))
+              (appendo ,xs ,y ,xys)))))

@@ -11,7 +11,11 @@
          absento
          project
          var?
-         always-wrap-reified?)
+         always-wrap-reified?
+         empty-state
+         goal-to-stream
+         appendo
+         upd-unit)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))
@@ -41,3 +45,5 @@
 (define (var*? v) (var? (car v)))
 
 (include "mk.scm")
+(include "fair.scm")
+(include "peter-tests.scm")

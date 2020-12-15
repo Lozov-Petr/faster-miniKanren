@@ -322,26 +322,26 @@
     ((_ e0 e ...)
      (mplus e0 (suspend (mplus* e ...))))))
 
-; (fresh (x:id ...) g:Goal ...+) -> Goal
-(define-syntax fresh
-  (syntax-rules ()
-    ((_ (x ...) g0 g ...)
-     (lambda (st)
-       (suspend
-         (let ((scope (subst-scope (state-S st))))
-           (let ((x (var scope)) ...)
-             (bind* (g0 st) g ...))))))))
+;; (fresh (x:id ...) g:Goal ...+) -> Goal
+; (define-syntax fresh
+;  (syntax-rules ()
+;    ((_ (x ...) g0 g ...)
+;     (lambda (st)
+;       (suspend
+;         (let ((scope (subst-scope (state-S st))))
+;           (let ((x (var scope)) ...)
+;             (bind* (g0 st) g ...))))))))
 
-; (conde [g:Goal ...] ...+) -> Goal
-(define-syntax conde
-  (syntax-rules ()
-    ((_ (g0 g ...) (g1 g^ ...) ...)
-     (lambda (st)
-       (suspend
-         (let ((st (state-with-scope st (new-scope))))
-           (mplus*
-             (bind* (g0 st) g ...)
-             (bind* (g1 st) g^ ...) ...)))))))
+;; (conde [g:Goal ...] ...+) -> Goal
+; (define-syntax conde
+;  (syntax-rules ()
+;    ((_ (g0 g ...) (g1 g^ ...) ...)
+;     (lambda (st)
+;       (suspend
+;         (let ((st (state-with-scope st (new-scope))))
+;           (mplus*
+;             (bind* (g0 st) g ...)
+;             (bind* (g1 st) g^ ...) ...)))))))
 
 (define-syntax run
   (syntax-rules ()
