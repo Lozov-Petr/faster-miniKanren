@@ -343,22 +343,22 @@
 ;             (bind* (g0 st) g ...)
 ;             (bind* (g1 st) g^ ...) ...)))))))
 
-(define-syntax run
-  (syntax-rules ()
-    ((_ n (q) g0 g ...)
-     (take n
-           (suspend
-             ((fresh (q) g0 g ...
-                     (lambda (st)
-                       (let ((st (state-with-scope st nonlocal-scope)))
-                         (let ((z ((reify q) st)))
-                           (cons z (lambda () (lambda () #f)))))))
-              empty-state))))
-    ((_ n (q0 q1 q ...) g0 g ...)
-     (run n (x)
-       (fresh (q0 q1 q ...)
-         g0 g ...
-         (== (list q0 q1 q ...) x))))))
+;(define-syntax run
+;  (syntax-rules ()
+;    ((_ n (q) g0 g ...)
+;     (take n
+;           (suspend
+;             ((fresh (q) g0 g ...
+;                     (lambda (st)
+;                       (let ((st (state-with-scope st nonlocal-scope)))
+;                         (let ((z ((reify q) st)))
+;                           (cons z (lambda () (lambda () #f)))))))
+;              empty-state))))
+;    ((_ n (q0 q1 q ...) g0 g ...)
+;     (run n (x)
+;       (fresh (q0 q1 q ...)
+;         g0 g ...
+;         (== (list q0 q1 q ...) x))))))
 
 (define-syntax run*
   (syntax-rules ()

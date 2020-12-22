@@ -14,8 +14,13 @@
          always-wrap-reified?
          empty-state
          goal-to-stream
-         appendo
-         upd-unit)
+         unfold
+         split-by-pred
+         appendo reverso
+         new-unit
+         run-unit
+         step-unit
+         init-state)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))
