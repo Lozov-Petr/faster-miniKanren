@@ -489,7 +489,7 @@
     (let ((res (proc (car lst) init)))
       (and res (and-foldl proc res (cdr lst))))))
 
-(define (== u v)
+(define (==^ u v)
   (lambda (st)
     (let-values (((S^ added) (unify u v (state-S st))))
       (if S^

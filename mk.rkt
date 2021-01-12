@@ -16,11 +16,14 @@
          goal-to-stream
          unfold
          split-by-pred
-         appendo reverso
+         appendo reverso leo gto minmaxo smallesto sorto sorto^
+         rel-info1 rel-info2
          new-unit
          run-unit
+         run-fair
          step-unit
-         init-state)
+         init-state
+         sublist)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))
@@ -50,5 +53,6 @@
 (define (var*? v) (var? (car v)))
 
 (include "mk.scm")
+(include "pmatch.scm")
 (include "fair.scm")
 (include "peter-tests.scm")
