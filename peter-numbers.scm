@@ -1,12 +1,3 @@
-(define appendo
-  (lambda (l s out)
-    (conde
-      [(== '() l) (== s out)]
-      [(fresh (a d res)
-         (== `(,a . ,d) l)
-         (== `(,a . ,res) out)
-         (appendo d s res))])))
-
 (define build-num
   (lambda (n)
     (cond
@@ -18,14 +9,39 @@
          (build-num (quotient n 2))))
       ((zero? n) '()))))
 
-(define zeroo
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define appendo^-rel
+  (lambda (l s out)
+    (conde
+      [(== '() l) (== s out)]
+      [(fresh (a d res)
+         (== `(,a . ,d) l)
+         (== `(,a . ,res) out)
+         (appendo^ d s res))])))
+
+(define (appendo^ x y xy)
+ `((appendo^ . ,appendo^-rel) ,x ,y ,xy))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define zeroo-rel
   (lambda (n)
     (== '() n)))
+
+(define (zeroo n)
+ `((zeroo . ,zeroo-rel) ,n))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define poso
   (lambda (n)
     (fresh (a d)
       (== `(,a . ,d) n))))
+
+(define (poso n)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define >1o
   (lambda (n)
@@ -275,14 +291,14 @@
          (== `(0 . ,q1) q)
          (poso q1)
          (<lo b n)
-         (appendo b `(1 . ,b) b2)
+         (appendo^ b `(1 . ,b) b2)
          (exp2 n b2 q1)))
       ((fresh (q1 nh b2 s)
          (== `(1 . ,q1) q)
          (poso q1)
          (poso nh)
          (splito n b s nh)
-         (appendo b `(1 . ,b) b2)
+         (appendo^ b `(1 . ,b) b2)
          (exp2 nh b2 q1))))))
 
 (define repeated-mul

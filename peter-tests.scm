@@ -1,8 +1,3 @@
-(define (to-intmap l)
-  (foldl (lambda (p acc) (intmap-set acc (car p) (cdr p))) empty-intmap l))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (appendo-rel x y xy)
   (conde
     ((== x '()) (== y xy))
@@ -27,11 +22,24 @@
 (define (reverso x y)
   `((reverso . ,reverso-rel) ,x ,y))
 
+(define (reverso^-rel x y)
+  (conde
+    ((== x '()) (== y '()))
+    ((fresh (e xs ys)
+      (== x (cons e xs))
+      (reverso^ xs ys)
+      (appendo ys `(,e) y)))))
+
+(define (reverso^ x y)
+  `((reverso . ,reverso^-rel) ,x ,y))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (define rel-info1
   (to-intmap '((appendo (#t #f #t)) (reverso (#t #f)))))
+
+(define rels1 (list appendo reverso))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -111,9 +119,27 @@
       (sorto^ xs xs^)))))
 
 (define (sorto^ x y)
-  `((sorto . ,sorto^-rel) ,x ,y))
+  `((sorto^ . ,sorto^-rel) ,x ,y))
+
+(define (i2n n)
+  (if (zero? n) 'zero (cons 'succ (i2n (- n 1)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define rel-info2
-  (to-intmap '((leo (#t #t)) (gto (#t #t)) (minmaxo (#t #t #t #t)) (smallesto (#t #f #t)) (sorto (#f #t)))))
+  (to-intmap '((leo (#t #t)) (gto (#t #t)) (minmaxo (#t #t #t #t)) (smallesto (#t #f #t)) (sorto (#f #t)) (sorto^ (#f #t)))))
+
+(define rels2 (list leo gto minmaxo smallesto sorto sorto^))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (unit-sorto-4)
+  (run-unit 1 (q) (sorto (list (i2n 3) (i2n 2) (i2n 1) (i2n 0)) q)))
+
+
+(define (rev-list n)
+  (cond
+    ((zero? n) '())
+    (else (cons (i2n (- n 1)) (rev-list (- n 1))))))
+
+(define (sort-list n) (reverse (rev-list n)))

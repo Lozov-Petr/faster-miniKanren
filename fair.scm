@@ -109,7 +109,7 @@
   (goal-to-stream new empty-state goal))
 
 
-(define (run n sep upd new goal)
+(define (run-f n sep upd new goal)
   (letrec ((run^ (lambda (n stream)
     (if (zero? n) '()
     (let-values (((stream answer) (step sep upd new stream)))
@@ -120,13 +120,29 @@
         (run^ n stream))))))))
   (run^ n (init-state new goal))))
 
+  (define-syntax run
+    (syntax-rules ()
+      ((_ n sup (q) g1 ...)
+        (let* ((scope (subst-scope (state-S empty-state)))
+               (q (var scope))
+               (stream (run-f n (car sup) (cadr sup) (caddr sup) (fresh () g1 ...))))
+          (map (lambda (st) ((reify q) st)) stream)))
+      ((_ n sup (q0 ...) g0 ...)
+       (run n sup (x)
+         (fresh (q0 ...)
+           g0 ...
+           (== (list q0 ...) x))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (upd-unit p s c) #f)
 (define (new-unit s c) #f)
 (define (sep-unit s cs) (values '() cs))
-(define (step-unit stream) (step sep-unit upd-unit new-unit stream))
-(define (run-unit n goal) (run n sep-unit upd-unit new-unit goal))
+(define sup-unit (list sep-unit upd-unit new-unit))
+
+(define-syntax run-unit
+  (syntax-rules ()
+    ((_ n (q0 ...) g0 ...) (run n sup-unit (q0 ...) g0 ...))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -134,12 +150,25 @@
   (if (pair? t) (f (car t) (term-foldr f acc (cdr t))) (f t acc)))
 
 
+(define (subst-term s t)
+(let ((t (walk t (state-S s))))
+  (cond
+    ((var?    t) t)
+    ((symbol? t) t)
+    ((null?   t) t)
+    ((number? t) 1)
+    ((pair?   t) `(,(subst-term s (car t)) . ,(subst-term s (cdr t))))
+    (else (error 'subst-term (format "term = ~s\n" t))))))
+
 (define (height state term)
   (let ((t (walk term (state-S state))))
     (cond
-      ((and (list? t) (pair? t)) (+ 1 (max (height state (car t)) (height state (cdr t)))))
-      ((pair? t) (+ 1 (term-foldr (lambda (t acc) (max acc (height state t))) 0 t)))
-      (else 0))))
+      ((var?    t) 1)
+      ((symbol? t) 1)
+      ((null?   t) 1)
+      ((number? t) 1)
+      ((pair?   t) (+ 1 (max (height state (car t)) (height state (cdr t)))))
+      (else (error 'height (format "term = ~s\n" t))))))
 
 
 (define (sublist bools list)
@@ -203,6 +232,81 @@
     (let-values (((l1 l2) (split-by-pred (lambda (c) (pred s c)) cs)))
       (if (null? l2) (split-by-pred (lambda (c) (not (cddr c))) cs) (values l1 l2))))))
 
+(define (to-intmap l)
+  (foldl (lambda (p acc) (intmap-set acc (car p) (cadr p))) empty-intmap l))
 
-(define (run-fair n rel-info goal)
-  (run n (sep-fair rel-info) (upd-fair rel-info) new-fair goal))
+(define (sup-fair relations)
+  (let ((rel-info (to-intmap (map find-sr-args relations))))
+    (list (sep-fair rel-info) (upd-fair rel-info) new-fair)))
+
+
+(define-syntax run-fair
+  (syntax-rules ()
+    ((_ n rels (q0 ...) g0 ...)
+      (let ((rel-info (sup-fair rels)))
+        (run n rel-info (q0 ...) g0 ...)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (generate-fresh-vars scope n)
+  (cond
+    ((zero? n) '())
+    (else (cons (var scope) (generate-fresh-vars scope (- n 1))))))
+
+(define (get-calls stream)
+  (pmatch stream
+    [() '()]
+    [(disj ,d1 . ,d2)
+      (append (get-calls d1) (get-calls d2))]
+    [(conj ,subst . ,conjs)
+      (map (lambda (c) (cons subst (car c))) conjs)]))
+
+(define (split-by-name calls name)
+  (if (null? calls)
+    (values '() '())
+    (let-values (((l1 l2) (split-by-name (cdr calls) name)))
+      (if (eq? (caadar calls) name)
+        (values (cons (car calls) l1) l2)
+        (values l1 (cons (caadar calls) l2))))))
+
+(define (contains-var term var state)
+  (let ((term (walk term (state-S state))))
+    (cond
+      ((var? term) (eq? term var))
+      ((pair? term) (or (contains-var (car term) var state)
+                        (contains-var (cdr term) var state)))
+      (else #f))))
+
+(define (arg-is-strict-subterm arg var state)
+  (let ((arg (walk arg (state-S state))))
+    (if (var? arg) #f
+      (contains-var arg var state))))
+
+(define (is-sr-argument arg vars-with-states)
+  (foldr (lambda (vs acc) (and (arg-is-strict-subterm arg (cdr vs) (car vs)) acc)) #t vars-with-states))
+
+(define (prepare-self-call c)
+  (let ((state (car c))
+        (args  (cddr c)))
+  (map (lambda (a) (cons state a)) args)))
+
+(define (transpose l)
+  (let ((handler (lambda (x acc)
+      (cons (cons (car x) (car acc)) (cons (cdr x) (cdr acc))))))
+  (if (null? (car l)) '()
+    (let ((res (foldr handler '(() . ()) l)))
+      (cons (car res) (transpose (cdr res)))))))
+
+(define (find-sr-args rel)
+  (let* ((scope  (subst-scope (state-S empty-state)))
+         (arity  (procedure-arity rel))
+         (inds   (range 0 arity))
+         (vars   (generate-fresh-vars scope arity))
+         (call   (apply rel vars))
+         (name   (caar call))
+         (stream (unfold upd-unit empty-state (cons call #f)))
+         (calls  (get-calls stream)))
+  (let-values (((self-calls other-calls) (split-by-name calls name)))
+  (let* ((prep-self-calls (map prepare-self-call self-calls))
+         (groups          (transpose (cons vars prep-self-calls))))
+  (list name (map (lambda (g) (is-sr-argument (car g) (cdr g))) groups))))))

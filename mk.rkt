@@ -10,20 +10,24 @@
          symbolo numbero stringo
          absento
          project
-         var?
+         var? var
          always-wrap-reified?
          empty-state
          goal-to-stream
-         unfold
+         unfold step
          split-by-pred
          appendo reverso leo gto minmaxo smallesto sorto sorto^
-         rel-info1 rel-info2
+         rel-info1 rel-info2 rels1 rels2 i2n rev-list sort-list
+         unit-sorto-4
          new-unit
+         new-fair
+         upd-fair
+         sep-fair
          run-unit
          run-fair
-         step-unit
-         init-state
-         sublist)
+         init-state height
+         sublist
+         find-sr-args)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))
@@ -55,4 +59,5 @@
 (include "mk.scm")
 (include "pmatch.scm")
 (include "fair.scm")
+(include "test-check.scm")
 (include "peter-tests.scm")
