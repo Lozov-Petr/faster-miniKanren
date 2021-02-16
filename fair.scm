@@ -33,6 +33,30 @@
     ((_ a b)
       `(== ,a ,b))))
 
+(define-syntax =/=
+  (syntax-rules ()
+    ((_ a b)
+      `(=/= ,a ,b))))
+
+(define-syntax numbero
+  (syntax-rules ()
+    ((_ a )
+      `(numbero ,a))))
+
+(define-syntax stringo
+  (syntax-rules ()
+    ((_ a )
+      `(stringo ,a))))
+
+(define-syntax symbolo
+  (syntax-rules ()
+    ((_ a )
+      `(symbolo ,a))))
+
+(define-syntax absento
+  (syntax-rules ()
+    ((_ a b)
+      `(absento ,a ,b))))
 
 (define (disj-cmb stream1 stream2)
   (cond
@@ -63,6 +87,26 @@
           (let ((new-state ((==^ t1 t2) state)))
             (if new-state `(conj ,new-state . ,conjs) '()))]
 
+        [((conj ,state . ,conjs) (=/= ,t1 ,t2))
+          (let ((new-state ((=/=^ t1 t2) state)))
+            (if new-state `(conj ,new-state . ,conjs) '()))]
+
+        [((conj ,state . ,conjs) (numbero ,t))
+          (let ((new-state ((numbero^ t) state)))
+            (if new-state `(conj ,new-state . ,conjs) '()))]
+
+        [((conj ,state . ,conjs) (stringo ,t))
+          (let ((new-state ((stringo^ t) state)))
+            (if new-state `(conj ,new-state . ,conjs) '()))]
+
+        [((conj ,state . ,conjs) (symbolo ,t))
+          (let ((new-state ((symbolo^ t) state)))
+            (if new-state `(conj ,new-state . ,conjs) '()))]
+
+        [((conj ,state . ,conjs) (absento ,t1 ,t2))
+          (let ((new-state ((absento^ t1 t2) state)))
+            (if new-state `(conj ,new-state . ,conjs) '()))]
+
         [(,stream (&& ,c1 . ,c2))
           (g2s (g2s stream c1) c2)]
 
@@ -87,7 +131,8 @@
     [(disj ,d1 . ,d2)
       `(disj ,(push conjs1 conjs2 d1) . ,(push conjs1 conjs2 d2))]
     [(conj ,state . ,conjs)
-      `(conj ,state . ,(append conjs1 (append conjs conjs2)))]))
+      `(conj ,state . ,(append conjs1 (append conjs conjs2)))]
+    [,e (error 'push (format "stream = ~s\n" stream))]))
 
 
 (define (step sep upd new stream)
@@ -102,7 +147,8 @@
              (if (null? conjs2)
                  (step sep upd new
                        `(conj ,state . ,(map (lambda (c) (cons (car c) (new state c))) conjs)))
-                 (values (push conjs1 (cdr conjs2) (unfold upd state (car conjs2))) #f)))]))
+                 (values (push conjs1 (cdr conjs2) (unfold upd state (car conjs2))) #f)))]
+    [,s (error 'step (format "stream = ~s\n" stream))]))
 
 
 (define (init-state new goal)
@@ -118,7 +164,8 @@
        (if answer
         (cons answer (run^ (if n (- n 1) n) stream))
         (run^ n stream))))))))
-  (run^ n (init-state new goal))))
+  (let ((state (init-state new goal)))
+    (if (null? state) '() (run^ n state)))))
 
   (define-syntax run
     (syntax-rules ()
@@ -126,7 +173,7 @@
         (let* ((scope (subst-scope (state-S empty-state)))
                (q (var scope))
                (stream (run-f n (car sup) (cadr sup) (caddr sup) (fresh () g1 ...))))
-          (map (lambda (st) ((reify q) st)) stream)))
+          (map (lambda (st) ((reify q) (state-with-scope st nonlocal-scope))) stream)))
       ((_ n sup (q0 ...) g0 ...)
        (run n sup (x)
          (fresh (q0 ...)
@@ -149,16 +196,6 @@
 (define (term-foldr f acc t)
   (if (pair? t) (f (car t) (term-foldr f acc (cdr t))) (f t acc)))
 
-
-(define (subst-term s t)
-(let ((t (walk t (state-S s))))
-  (cond
-    ((var?    t) t)
-    ((symbol? t) t)
-    ((null?   t) t)
-    ((number? t) 1)
-    ((pair?   t) `(,(subst-term s (car t)) . ,(subst-term s (cdr t))))
-    (else (error 'subst-term (format "term = ~s\n" t))))))
 
 (define (height state term)
   (let ((t (walk term (state-S state))))

@@ -426,9 +426,9 @@
 (define (symbol-compare a b) (string-compare (symbol->string a) (symbol->string b)))
 
 (declare-type-constraints type-constraints
-  (numbero number? num number-compare)
-  (stringo string? str string-compare)
-  (symbolo symbol? sym symbol-compare))
+  (numbero^ number? num number-compare)
+  (stringo^ string? str string-compare)
+  (symbolo^ symbol? sym symbol-compare))
 
 (define (add-to-D st v d)
   (let* ((c (lookup-c st v))
@@ -455,22 +455,22 @@
                 st))))))))
 
 ; Term, Term -> Goal
-(define (=/= u v)
+(define (=/=^ u v)
   (=/=* (list (cons u v))))
 
 ; Term, Term -> Goal
 ; Generalized 'absento': 'term1' can be any legal term (old version
 ; of faster-miniKanren required 'term1' to be a ground atom).
-(define (absento term1 term2)
+(define (absento^ term1 term2)
   (lambda (st)
     (let ((term1 (walk term1 (state-S st)))
           (term2 (walk term2 (state-S st))))
-      (let ((st^ ((=/= term1 term2) st)))
+      (let ((st^ ((=/=^ term1 term2) st)))
         (and st^
              (cond
                ((pair? term2)
-                (let ((st^^ ((absento term1 (car term2)) st^)))
-                  (and st^^ ((absento term1 (cdr term2)) st^^))))
+                (let ((st^^ ((absento^ term1 (car term2)) st^)))
+                  (and st^^ ((absento^ term1 (cdr term2)) st^^))))
                ((var? term2)
                 (let* ((c (lookup-c st^ term2))
                        (A (c-A c)))
@@ -508,7 +508,7 @@
           (if (c-T old-c)
             (list ((apply-type-constraint (c-T old-c)) (rhs a)))
             '())
-          (map (lambda (atom) (absento atom (rhs a))) (c-A old-c))
+          (map (lambda (atom) (absento^ atom (rhs a))) (c-A old-c))
           (map =/=* (c-D old-c))))))))
 
 (define (walk* v S)
