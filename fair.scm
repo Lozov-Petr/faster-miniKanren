@@ -239,7 +239,7 @@
           (args (cdar p))
           (prev (cadr p)))
     (pmatch (intmap-ref rel-info name)
-      [(unbound) (error "Undefined relation")]
+      [(unbound) (error 'upd-fair (format "name = ~s\n" name))]
       [,args-info (cons (intmap-set prev name
         (map (lambda (t) (height s t)) (sublist args-info args))) #t)]))))
 
@@ -255,7 +255,7 @@
             (name    (caaar c))
             (args    (cdar c)))
       (pmatch (intmap-ref rel-info name)
-        [(unbound) (error "Undefined relation.")]
+        [(unbound) (error  'sep-fair (format "name = ~a\n" name))]
         [,args-info
         (let* ((args (sublist args-info args))
               (curr-hs (map (lambda (t) (height s t)) args)))
@@ -276,6 +276,14 @@
   (let ((rel-info (to-intmap (map find-sr-args relations))))
     (list (sep-fair rel-info) (upd-fair rel-info) new-fair)))
 
+(define (sup-fair^ rel-info)
+    (list (sep-fair rel-info) (upd-fair rel-info) new-fair))
+
+(define-syntax run-fair-internal
+  (syntax-rules ()
+    ((_ n rels (q0 ...) g0 ...)
+      (let ((rel-info (sup-fair^ (to-intmap rels))))
+        (run n rel-info (q0 ...) g0 ...)))))
 
 (define-syntax run-fair
   (syntax-rules ()

@@ -133,9 +133,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (unit-sorto-4)
-  (run-unit 1 (q) (sorto (list (i2n 3) (i2n 2) (i2n 1) (i2n 0)) q)))
-
 
 (define (rev-list n)
   (cond
@@ -143,3 +140,44 @@
     (else (cons (i2n (- n 1)) (rev-list (- n 1))))))
 
 (define (sort-list n) (reverse (rev-list n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (lengtho-rel l n)
+  (conde
+    ((== l '()) (== n 'zero))
+    ((fresh (e l^ n^)
+      (== l `(,e . ,l^))
+      (== n `(succ . ,n^))
+      (lengtho l^ n^)))))
+
+(define (lengtho x y)
+  `((lengtho . ,lengtho-rel) ,x ,y))
+
+
+(define (check-listo-rel l)
+  (conde
+    ((== l '()))
+    ((fresh (l^) (== l `(a . ,l^)) (check-listo l^)))
+    ((fresh (l^) (== l `(b . ,l^)) (check-listo l^)))
+    ((fresh (l^) (== l `(c . ,l^)) (check-listo l^)))))
+
+(define (check-listo x)
+  `((check-listo . ,check-listo-rel) ,x))
+
+
+(define (repeato-rel l)
+  (conde
+    ((== l '()))
+    ((fresh (e) (== l `(,e))))
+    ((fresh (a l^)
+      (== l `(,a ,a . ,l^))
+      (repeato `(,a . ,l^))))))
+
+(define (repeato x)
+  `((repeato . ,repeato-rel) ,x))
+
+
+(define rels3
+  (list lengtho check-listo repeato))

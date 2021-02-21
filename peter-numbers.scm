@@ -34,21 +34,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define poso
+(define poso-rel
   (lambda (n)
     (fresh (a d)
       (== `(,a . ,d) n))))
 
 (define (poso n)
+ `((poso . ,poso-rel) ,n))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define >1o
+(define >1o-rel
   (lambda (n)
     (fresh (a ad dd)
       (== `(,a ,ad . ,dd) n))))
 
-(define full-addero
+(define (>1o n)
+ `((>1o . ,>1o-rel) ,n))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define full-addero-rel
   (lambda (b x y r c)
     (conde
       ((== 0 b) (== 0 x) (== 0 y) (== 0 r) (== 0 c))
@@ -60,7 +66,12 @@
       ((== 0 b) (== 1 x) (== 1 y) (== 0 r) (== 1 c))
       ((== 1 b) (== 1 x) (== 1 y) (== 1 r) (== 1 c)))))
 
-(define addero
+(define (full-addero b x y r c)
+ `((full-addero . ,full-addero-rel) ,b ,x ,y ,r ,c))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define addero-rel
   (lambda (d n m r)
     (conde
       ((== 0 d) (== '() m) (== n r))
@@ -79,7 +90,12 @@
        (addero d '(1) n r))
       ((>1o n) (gen-addero d n m r)))))
 
-(define gen-addero
+(define (addero d n m r)
+ `((addero . ,addero-rel) ,d ,n ,m ,r))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define gen-addero-rel
   (lambda (d n m r)
     (fresh (a b c e x y z)
       (== `(,a . ,x) n)
@@ -88,15 +104,30 @@
       (full-addero d a b c e)
       (addero e x y z))))
 
-(define pluso
+(define (gen-addero d n m r)
+ `((gen-addero . ,gen-addero-rel) ,d ,n ,m ,r))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define pluso-rel
   (lambda (n m k)
     (addero 0 n m k)))
 
-(define minuso
+(define (pluso n m k)
+ `((pluso . ,pluso-rel) ,n ,m ,k))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define minuso-rel
   (lambda (n m k)
     (pluso m k n)))
 
-(define *o
+(define (minuso n m k)
+ `((minuso . ,minuso-rel) ,n ,m ,k))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *o-rel
   (lambda (n m p)
     (conde
       ((== '() n) (== '() p))
@@ -117,14 +148,24 @@
          (== `(1 . ,y) m) (poso y)
          (odd-*o x n m p))))))
 
-(define odd-*o
+(define (*o n m p)
+`((*o . ,*o-rel) ,n ,m ,p))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define odd-*o-rel
   (lambda (x n m p)
     (fresh (q)
       (bound-*o q p n m)
       (*o x m q)
       (pluso `(0 . ,q) m p))))
 
-(define bound-*o
+(define (odd-*o x n m p)
+`((odd-*o . ,odd-*o-rel) ,x ,n ,m ,p))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define bound-*o-rel
   (lambda (q p n m)
     (conde
       ((== '() q) (poso p))
@@ -138,7 +179,13 @@
            ((== `(,a3 . ,z) n)
             (bound-*o x y z m))))))))
 
-(define =lo
+(define (bound-*o q p n m)
+`((bound-*o . ,bound-*o-rel) ,q ,p ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define =lo-rel
   (lambda (n m)
     (conde
       ((== '() n) (== '() m))
@@ -148,7 +195,12 @@
          (== `(,b . ,y) m) (poso y)
          (=lo x y))))))
 
-(define <lo
+(define (=lo n m)
+`((=lo . ,=lo-rel) ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define <lo-rel
   (lambda (n m)
     (conde
       ((== '() n) (poso m))
@@ -158,13 +210,24 @@
          (== `(,b . ,y) m) (poso y)
          (<lo x y))))))
 
-(define <=lo
+(define (<lo n m)
+`((<lo . ,<lo-rel) ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define <=lo-rel
   (lambda (n m)
     (conde
       ((=lo n m))
       ((<lo n m)))))
 
-(define <o
+(define (<=lo n m)
+`((<=lo . ,<=lo-rel) ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define <o-rel
   (lambda (n m)
     (conde
       ((<lo n m))
@@ -173,13 +236,23 @@
          (poso x)
          (pluso n x m))))))
 
-(define <=o
+(define (<o n m)
+`((<o . ,<o-rel) ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define <=o-rel
   (lambda (n m)
     (conde
       ((== n m))
       ((<o n m)))))
 
-(define /o
+(define (<=o n m)
+`((<=o . ,<=o-rel) ,n ,m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define /o-rel
   (lambda (n m q r)
     (conde
       ((== r n) (== '() q) (<o n m))
@@ -203,7 +276,12 @@
             (splito rr r '() rh)
             (/o nh m qh rh))))))))
 
-(define splito
+(define (/o n m q r)
+`((/o . ,/o-rel) ,n ,m ,q ,r))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define splito-rel
   (lambda (n r l h)
     (conde
       ((== '() n) (== '() h) (== '() l))
@@ -234,7 +312,12 @@
          (poso l^)
          (splito n^ r^ l^ h))))))
 
-(define logo
+(define (splito n r l h)
+`((splito . ,splito-rel) ,n ,r ,l ,h))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define logo-rel
   (lambda (n b q r)
     (conde
       ((== '(1) n) (poso b) (== '() q) (== '() r))
@@ -280,7 +363,12 @@
              (pluso bq r n)
              (<o n bq1))))))))
 
-(define exp2
+(define (logo n b q r)
+`((logo . ,logo-rel) ,n ,b ,q ,r))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define exp2-rel
   (lambda (n b q)
     (conde
       ((== '(1) n) (== '() q))
@@ -301,7 +389,12 @@
          (appendo^ b `(1 . ,b) b2)
          (exp2 nh b2 q1))))))
 
-(define repeated-mul
+(define (exp2 n b q)
+`((exp2 . ,exp2-rel) ,n ,b ,q))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define repeated-mul-rel
   (lambda (n q nq)
     (conde
       ((poso n) (== '() q) (== '(1) nq))
@@ -312,6 +405,30 @@
          (repeated-mul n q1 nq1)
          (*o nq1 n nq))))))
 
-(define expo
+(define (repeated-mul n q nq)
+`((repeated-mul . ,repeated-mul-rel) ,n ,q ,nq))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define expo-rel
   (lambda (b q n)
     (logo n b q '())))
+
+(define (expo b q n)
+`((expo . ,expo-rel) ,b ,q ,n))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define numbers-rels
+  '((appendo^ (#t #f #t))
+    (zeroo (#t))
+    (poso (#t))
+    (>1o (#t))
+    (full-addero (#t #t #t #t #t))
+    (addero (#f #t #t #t))
+    (gen-addero (#f #f #f #t))
+    (pluso (#t #t #t))
+    (minuso (#t #t #t))
+    (*o (#t #t #t))
+    (odd-*o (#t #t #t #t))
+    (bound-*o (#t #t #t #t))))

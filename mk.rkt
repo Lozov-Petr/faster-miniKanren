@@ -17,17 +17,17 @@
          unfold step
          split-by-pred
          appendo reverso leo gto minmaxo smallesto sorto sorto^
-         rel-info1 rel-info2 rels1 rels2 i2n rev-list sort-list
-         unit-sorto-4
+         rel-info1 rel-info2 rels1 rels2 rels3 i2n rev-list sort-list
          new-unit
          new-fair
          upd-fair
          sep-fair
          run-unit
-         run-fair
+         run-fair run-fair-internal to-intmap
          init-state height
          sublist
-         find-sr-args)
+         find-sr-args
+         lengtho check-listo repeato)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))
