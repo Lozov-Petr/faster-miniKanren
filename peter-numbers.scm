@@ -419,6 +419,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define rels
+  (list
+    appendo^
+    zeroo
+    poso
+    >1o
+    full-addero
+    addero
+    gen-addero
+    pluso
+    minuso
+    *o
+    odd-*o
+    bound-*o
+    /o
+    <=lo
+    =lo
+    splito
+    <lo
+    <o
+    <=o
+    exp2
+    logo
+    repeated-mul))
+
 (define numbers-rels
   '((appendo^ (#t #f #t))
     (zeroo (#t))

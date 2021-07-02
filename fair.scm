@@ -248,26 +248,26 @@
   `(,empty-intmap . #f))
 
 
+(define (sep-fair-pred rel-info s c)
+  (let ((history (cadr c))
+        (name    (caaar c))
+        (args    (cdar c)))
+  (pmatch (intmap-ref rel-info name)
+    [(unbound) (error  'sep-fair (format "name = ~a\n" name))]
+    [,args-info
+    (let* ((args (sublist args-info args))
+          (curr-hs (map (lambda (t) (height s t)) args)))
+    (and (foldr (lambda (t acc) (or acc (is-not-free s t))) #f args)
+      (pmatch (intmap-ref history name)
+        [(unbound) #t]
+        [,prev-hs
+            (and (check-two-lists >= prev-hs curr-hs)
+                 (not (check-two-lists <= prev-hs curr-hs)))])))])))
+
 (define (sep-fair rel-info)
-  (let ((pred
-    (lambda (s c)
-      (let ((history (cadr c))
-            (name    (caaar c))
-            (args    (cdar c)))
-      (pmatch (intmap-ref rel-info name)
-        [(unbound) (error  'sep-fair (format "name = ~a\n" name))]
-        [,args-info
-        (let* ((args (sublist args-info args))
-              (curr-hs (map (lambda (t) (height s t)) args)))
-        (and (foldr (lambda (t acc) (or acc (is-not-free s t))) #f args)
-          (pmatch (intmap-ref history name)
-            [(unbound) #t]
-            [,prev-hs
-                (and (check-two-lists >= prev-hs curr-hs)
-                     (not (check-two-lists <= prev-hs curr-hs)))])))])))))
   (lambda (s cs)
-    (let-values (((l1 l2) (split-by-pred (lambda (c) (pred s c)) cs)))
-      (if (null? l2) (split-by-pred (lambda (c) (not (cddr c))) cs) (values l1 l2))))))
+    (let-values (((l1 l2) (split-by-pred (lambda (c) (sep-fair-pred rel-info s c)) cs)))
+      (if (null? l2) (split-by-pred (lambda (c) (not (cddr c))) cs) (values l1 l2)))))
 
 (define (to-intmap l)
   (foldl (lambda (p acc) (intmap-set acc (car p) (cadr p))) empty-intmap l))
@@ -355,3 +355,113 @@
   (let* ((prep-self-calls (map prepare-self-call self-calls))
          (groups          (transpose (cons vars prep-self-calls))))
   (list name (map (lambda (g) (is-sr-argument (car g) (cdr g))) groups))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (new-complex s c)
+  `(,empty-intmap . 0))
+
+(define (upd-complex rel-info)
+  (lambda (p s c)
+    (let ((name    (caaar p))
+          (args    (cdar p))
+          (prev    (cadr p))
+          (counter (cddr p)))
+    (pmatch (intmap-ref rel-info name)
+      [(unbound) (error 'upd-fair (format "name = ~s\n" name))]
+      [,args-info (cons (intmap-set prev name
+        (map (lambda (t) (height s t)) (sublist args-info args))) (+ 1 counter))]))))
+
+(define (sep-complex bound preds)
+  (lambda (s cs)
+    ; (newline) (map (lambda (c)(println (cons (caaar c) (cdar c)))) cs)
+    (if (null? preds)
+      (split-by-pred (lambda (c) (zero? (cddr c))) cs)
+      (let-values (((l1 l2) (split-by-pred (lambda (c) (and (> bound (cddr c)) ((car preds) s c))) cs)))
+        (if (null? l2) ((sep-complex bound (cdr preds)) s cs) (values l1 l2))))))
+
+
+(define (sup-complex bound preds rel-info)
+  (list (sep-complex bound preds) (upd-complex rel-info) new-complex))
+
+
+(define (pred-struct-rec rel-info)
+  (lambda (s c)
+;    (println 'pred-struct-rec)
+    (let ((history (cadr c))
+          (name    (caaar c))
+          (args    (cdar c)))
+    (pmatch (intmap-ref rel-info name)
+      [(unbound) (error  'sep-fair (format "name = ~a\n" name))]
+      [,args-info ;(print args-info)
+      (if (foldl (lambda (a b) (or a b)) #f args-info)
+        (let* ((args (sublist args-info args))
+              (curr-hs (map (lambda (t) (height s t)) args)))
+          (and (foldr (lambda (t acc) (or acc (is-not-free s t))) #f args)
+            (pmatch (intmap-ref history name)
+              [(unbound) #t]
+              [,prev-hs
+                  (and (check-two-lists >= prev-hs curr-hs)
+                       (not (check-two-lists <= prev-hs curr-hs)))])))
+        #f)]))))
+
+
+(define (pred-determ)
+  (lambda (s c)
+;    (println 'pred-determ)
+    (let ((stream (unfold upd-unit s c)))
+    (or (null? stream) (eq? 'conj (car stream))))))
+
+(define (ctors-vars state term)
+  (let ((t (walk term (state-S state))))
+    (cond
+      ((var?    t) (values 0 1))
+      ((symbol? t) (values 1 0))
+      ((null?   t) (values 1 0))
+      ((number? t) (values 1 0))
+      ((pair?   t)
+        (let*-values (((ctors1 vars1) (ctors-vars state (car t)))
+                      ((ctors2 vars2) (ctors-vars state (cdr t))))
+          (values (+ 1 ctors1 ctors2) (+ vars1 vars2))))
+      (else (error 'ctors-vars (format "term = ~s\n" t))))))
+
+(define (ctors-vars-in-args state terms)
+  (if (null? terms) (values 0 0)
+    (let*-values (((ctors1 vars1) (ctors-vars-in-args state (cdr terms)))
+                  ((ctors2 vars2) (ctors-vars         state (car terms))))
+      (values (+ ctors1 ctors2) (+ vars1 vars2)))))
+
+(define (pred-groundness bound)
+  (lambda (s c)
+;    (println 'pred-groundness)
+    (let ((args (cdar c)))
+      (let-values (((ctors vars) (ctors-vars-in-args s args)))
+      (> (/ ctors (+ ctors vars)) bound)))))
+
+
+(define-syntax run-complex
+  (syntax-rules ()
+    ((_ n rel-info bound preds (q0 ...) g0 ...)
+      (let ((sup (sup-complex bound preds rel-info)))
+            (run n sup (q0 ...) g0 ...)))))
+
+
+(define-syntax run-complex1
+  (syntax-rules ()
+    ((_ n rels (q0 ...) g0 ...)
+      (let* ((rel-info (to-intmap (map find-sr-args rels)))
+             (preds    (list (pred-struct-rec rel-info)
+                             (pred-determ)
+                             (pred-groundness 0.7)
+                             )))
+      (run-complex n rel-info 10000 preds (q0 ...) g0 ...)))))
+
+
+(define-syntax run-complex1-internal
+  (syntax-rules ()
+    ((_ n rel-info (q0 ...) g0 ...)
+      (let ((preds    (list (pred-struct-rec rel-info)
+                            (pred-determ)
+                            (pred-groundness 0.7)
+                            )))
+      (run-complex n rel-info 10000 preds (q0 ...) g0 ...)))))

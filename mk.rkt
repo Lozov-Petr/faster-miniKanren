@@ -16,8 +16,6 @@
          goal-to-stream
          unfold step
          split-by-pred
-         appendo reverso leo gto minmaxo smallesto sorto sorto^
-         rel-info1 rel-info2 rels1 rels2 rels3 i2n rev-list sort-list
          new-unit
          new-fair
          upd-fair
@@ -27,7 +25,15 @@
          init-state height
          sublist
          find-sr-args
-         lengtho check-listo repeato)
+         lengtho check-listo repeato
+
+         pred-struct-rec
+         pred-determ
+         pred-groundness
+         find-sr-args
+         run-complex
+         run-complex1
+         run-complex1-internal)
 
 (define empty-intmap (hasheq))
 (define (intmap-count m) (hash-count m))

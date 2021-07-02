@@ -36,10 +36,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define rel-info1
+(define reverso-info
   (to-intmap '((appendo (#t #f #t)) (reverso (#t #f)))))
 
-(define rels1 (list appendo reverso))
+(define reverso-rels (list appendo reverso))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -126,10 +126,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define rel-info2
+(define sorto-info
   (to-intmap '((leo (#t #t)) (gto (#t #t)) (minmaxo (#t #t #t #t)) (smallesto (#t #f #t)) (sorto (#f #t)) (sorto^ (#f #t)))))
 
-(define rels2 (list leo gto minmaxo smallesto sorto sorto^))
+(define sorto-rels (list leo gto minmaxo smallesto sorto sorto^))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
