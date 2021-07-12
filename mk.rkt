@@ -17,6 +17,8 @@
          unfold step
          split-by-pred
          new-unit
+         upd-unit
+         sep-unit
          new-fair
          upd-fair
          sep-fair

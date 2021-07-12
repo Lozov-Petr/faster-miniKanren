@@ -200,10 +200,11 @@
 (define (height state term)
   (let ((t (walk term (state-S state))))
     (cond
-      ((var?    t) 1)
-      ((symbol? t) 1)
-      ((null?   t) 1)
-      ((number? t) 1)
+      ((var?     t) 1)
+      ((symbol?  t) 1)
+      ((null?    t) 1)
+      ((number?  t) 1)
+      ((boolean? t) 1)
       ((pair?   t) (+ 1 (max (height state (car t)) (height state (cdr t)))))
       (else (error 'height (format "term = ~s\n" t))))))
 
